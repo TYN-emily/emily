@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>考研时间记录</title>
+  <style>
+    :root {
+      --ink: #20252c;
+      --muted: #687282;
+      --line: #d9e0ea;
+      --panel: #ffffff;
+      --wash: #f5f7fb;
+      --blue: #2f6fed;
+      --blue-soft: #e8f0ff;
+      --green: #27825d;
+      --green-soft: #e8f6ef;
+      --amber: #b96e17;
+      --amber-soft: #fff0d9;
+      --red: #c94343;
+      --shadow: 0 18px 50px rgba(35, 45, 66, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Microsoft YaHei UI", "Noto Sans SC", "Segoe UI", sans-serif;
+      background:
+        linear-gradient(115deg, rgba(232, 240, 255, 0.95), rgba(245, 247, 251, 0.4) 45%, rgba(232, 246, 239, 0.85)),
+        repeating-linear-gradient(135deg, rgba(47, 111, 237, 0.06) 0 1px, transparent 1px 18px);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 42px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 48px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      min-height: 38px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 5px 18px rgba(35, 45, 66, 0.08);
+    }
+
+    .btn.primary {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: white;
+    }
+
+    .btn.danger {
+      border-color: rgba(201, 67, 67, 0.35);
+      color: var(--red);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.5fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(217, 224, 234, 0.95);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .form {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      color: var(--ink);
+      min-height: 40px;
+      padding: 9px 10px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 76px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.14);
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .toggle-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--wash);
+    }
+
+    .switch {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      flex: 0 0 auto;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #b9c2d0;
+      border-radius: 999px;
+      transition: 0.18s;
+    }
+
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 3px;
+      top: 3px;
+      border-radius: 50%;
+      background: white;
+      transition: 0.18s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .switch input:checked + .slider {
+      background: var(--green);
+    }
+
+    .switch input:checked + .slider::before {
+      transform: translateX(20px);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 16px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: linear-gradient(180deg, white, var(--wash));
+      min-height: 86px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1.15;
+      margin-top: 8px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .section-body {
+      padding: 0 16px 16px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #eef4ff;
+      color: #30405a;
+      z-index: 1;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: #1f55bf;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .pill.rest {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .empty {
+      padding: 30px 16px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .bars {
+      display: grid;
+      gap: 9px;
+      padding: 16px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 76px 1fr 58px;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .bar-track {
+      height: 12px;
+      border-radius: 999px;
+      background: #edf1f6;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      padding: 16px;
+    }
+
+    .summary-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .summary-item {
+      display: grid;
+      grid-template-columns: 90px 1fr 60px;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      font-size: 13px;
+    }
+
+    .summary-item strong {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .record-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .mini {
+      min-height: 30px;
+      padding: 5px 8px;
+      border-radius: 7px;
+      border: 1px solid var(--line);
+      background: white;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    .mini.danger {
+      color: var(--red);
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .cloud-box {
+      margin: 0 16px 16px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: linear-gradient(180deg, #ffffff, #f7fbff);
+    }
+
+    .cloud-box h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .cloud-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .sync-status {
+      min-height: 20px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 880px) {
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .toolbar {
+        justify-content: stretch;
+      }
+
+      .toolbar .btn {
+        flex: 1;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        width: min(100% - 18px, 1180px);
+        padding-top: 18px;
+      }
+
+      .two,
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .cloud-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .mini-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>考研时间记录</h1>
+        <p class="subtitle">记录开始结束时间，自动汇总每天、每科的学习时长。</p>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="exportCsvBtn" type="button">导出CSV</button>
+        <button class="btn" id="exportJsonBtn" type="button">备份JSON</button>
+        <button class="btn" id="importBtn" type="button">导入JSON</button>
+        <button class="btn danger" id="clearBtn" type="button">清空</button>
+        <input class="file-input" id="importFile" type="file" accept="application/json,.json" />
+      </div>
+    </header>
+
+    <section class="grid">
+      <aside class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title" id="formTitle">新增记录</h2>
+          <button class="mini" id="resetFormBtn" type="button">重置</button>
+        </div>
+        <form class="form" id="recordForm">
+          <input id="recordId" type="hidden" />
+          <label>
+            日期
+            <input id="date" type="date" required />
+          </label>
+          <div class="two">
+            <label>
+              开始时间
+              <input id="start" type="time" required />
+            </label>
+            <label>
+              结束时间
+              <input id="end" type="time" required />
+            </label>
+          </div>
+          <div class="two">
+            <label>
+              科目
+              <select id="subject">
+                <option>数学</option>
+                <option>英语</option>
+                <option>政治</option>
+                <option>专业课</option>
+                <option>其他</option>
+              </select>
+            </label>
+            <label>
+              学习类型
+              <select id="type">
+                <option>刷题</option>
+                <option>看课</option>
+                <option>背诵</option>
+                <option>复盘</option>
+                <option>整理笔记</option>
+                <option>模考</option>
+                <option>休息</option>
+                <option>其他</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            任务内容
+            <textarea id="task" placeholder="例如：高数一元积分 1800 基础题"></textarea>
+          </label>
+          <div class="toggle-line">
+            <div>
+              <strong>计入学习时长</strong>
+              <div class="subtitle">吃饭、午休、摸鱼可以关掉</div>
+            </div>
+            <label class="switch" aria-label="是否计入学习时长">
+              <input id="counted" type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <label>
+            备注
+            <input id="note" type="text" placeholder="可空" />
+          </label>
+          <button class="btn primary" type="submit">保存记录</button>
+        </form>
+        <div class="cloud-box">
+          <h3>云同步</h3>
+          <label>
+            Supabase 项目地址
+            <input id="cloudUrl" type="url" placeholder="https://xxxx.supabase.co" />
+          </label>
+          <label style="margin-top:10px">
+            Supabase anon key
+            <input id="cloudKey" type="password" placeholder="eyJ..." />
+          </label>
+          <label style="margin-top:10px">
+            同步 ID
+            <input id="syncId" type="text" placeholder="例如：my-study-2026" />
+          </label>
+          <div class="toggle-line" style="margin-top:10px">
+            <div>
+              <strong>保存后自动上传</strong>
+              <div class="subtitle">配置云端后，每次保存记录会同步一次</div>
+            </div>
+            <label class="switch" aria-label="保存后自动上传">
+              <input id="autoSync" type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="cloud-actions">
+            <button class="btn" id="saveCloudBtn" type="button">保存配置</button>
+            <button class="btn" id="pushCloudBtn" type="button">上传云端</button>
+            <button class="btn" id="pullCloudBtn" type="button">拉取云端</button>
+          </div>
+          <div class="sync-status" id="syncStatus">未配置云同步。</div>
+        </div>
+      </aside>
+
+      <div>
+        <section class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">今日概览</h2>
+            <input id="focusDate" type="date" />
+          </div>
+          <div class="stats">
+            <div class="metric">
+              <span>今日学习</span>
+              <strong id="todayHours">0.00h</strong>
+            </div>
+            <div class="metric">
+              <span>今日记录</span>
+              <strong id="todayCount">0条</strong>
+            </div>
+            <div class="metric">
+              <span>累计学习</span>
+              <strong id="totalHours">0.00h</strong>
+            </div>
+            <div class="metric">
+              <span>有效天数</span>
+              <strong id="activeDays">0天</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-top:16px">
+          <div class="panel-header">
+            <h2 class="panel-title">科目统计</h2>
+          </div>
+          <div class="bars" id="subjectBars"></div>
+        </section>
+
+        <section class="panel" style="margin-top:16px">
+          <div class="panel-header">
+            <h2 class="panel-title">周月统计</h2>
+          </div>
+          <div class="mini-grid">
+            <div>
+              <div class="subtitle" style="margin-bottom:8px">最近 8 周</div>
+              <div class="summary-list" id="weeklyStats"></div>
+            </div>
+            <div>
+              <div class="subtitle" style="margin-bottom:8px">最近 6 个月</div>
+              <div class="summary-list" id="monthlyStats"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-top:16px">
+          <div class="panel-header">
+            <h2 class="panel-title">记录明细</h2>
+          </div>
+          <div class="section-body">
+            <div class="filters">
+              <label>
+                筛选日期
+                <input id="filterDate" type="date" />
+              </label>
+              <label>
+                筛选科目
+                <select id="filterSubject">
+                  <option value="">全部</option>
+                  <option>数学</option>
+                  <option>英语</option>
+                  <option>政治</option>
+                  <option>专业课</option>
+                  <option>其他</option>
+                </select>
+              </label>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>日期</th>
+                    <th>时间</th>
+                    <th>时长</th>
+                    <th>科目</th>
+                    <th>内容</th>
+                    <th>类型</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="recordsBody"></tbody>
+              </table>
+              <div class="empty" id="emptyState">还没有记录，先填一条今天做了什么。</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const storageKey = "postgrad-study-time-records-v1";
+    const cloudConfigKey = "postgrad-study-time-cloud-config-v1";
+    let records = [];
+
+    const $ = (id) => document.getElementById(id);
+
+    function todayString() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset();
+      return new Date(now.getTime() - offset * 60000).toISOString().slice(0, 10);
+    }
+
+    function timeToMinutes(value) {
+      const [hours, minutes] = value.split(":").map(Number);
+      return hours * 60 + minutes;
+    }
+
+    function durationHours(start, end) {
+      if (!start || !end) return 0;
+      const startMin = timeToMinutes(start);
+      let endMin = timeToMinutes(end);
+      if (endMin < startMin) endMin += 24 * 60;
+      return (endMin - startMin) / 60;
+    }
+
+    function fmtHours(value) {
+      return `${Number(value || 0).toFixed(2)}h`;
+    }
+
+    function dateFromString(value) {
+      const [year, month, day] = value.split("-").map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    function dateKey(date) {
+      const offset = date.getTimezoneOffset();
+      return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 10);
+    }
+
+    function addDays(date, days) {
+      const next = new Date(date);
+      next.setDate(next.getDate() + days);
+      return next;
+    }
+
+    function startOfWeek(date) {
+      const next = new Date(date);
+      const day = next.getDay() || 7;
+      next.setDate(next.getDate() - day + 1);
+      next.setHours(0, 0, 0, 0);
+      return next;
+    }
+
+    function monthKey(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    }
+
+    function loadRecords() {
+      try {
+        records = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      } catch {
+        records = [];
+      }
+    }
+
+    function saveRecords() {
+      localStorage.setItem(storageKey, JSON.stringify(records));
+    }
+
+    function setSyncStatus(message) {
+      $("syncStatus").textContent = message;
+    }
+
+    function normalizeCloudUrl(value) {
+      return String(value || "").trim().replace(/\/+$/, "");
+    }
+
+    function loadCloudConfig() {
+      try {
+        return JSON.parse(localStorage.getItem(cloudConfigKey) || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function saveCloudConfig() {
+      const config = {
+        url: normalizeCloudUrl($("cloudUrl").value),
+        key: $("cloudKey").value.trim(),
+        syncId: $("syncId").value.trim(),
+        autoSync: $("autoSync").checked,
+      };
+      if (!config.url || !config.key || !config.syncId) {
+        alert("项目地址、anon key、同步 ID 都要填。");
+        return null;
+      }
+      localStorage.setItem(cloudConfigKey, JSON.stringify(config));
+      setSyncStatus(`已保存配置：${config.syncId}`);
+      return config;
+    }
+
+    function applyCloudConfig() {
+      const config = loadCloudConfig();
+      $("cloudUrl").value = config.url || "";
+      $("cloudKey").value = config.key || "";
+      $("syncId").value = config.syncId || "";
+      $("autoSync").checked = Boolean(config.autoSync);
+      setSyncStatus(config.syncId ? `已配置：${config.syncId}` : "未配置云同步。");
+    }
+
+    function getCloudConfig() {
+      const config = loadCloudConfig();
+      if (!config.url || !config.key || !config.syncId) {
+        alert("请先填写并保存云同步配置。");
+        return null;
+      }
+      return config;
+    }
+
+    async function cloudRequest(config, path, options = {}) {
+      const response = await fetch(`${config.url}/rest/v1/${path}`, {
+        ...options,
+        headers: {
+          apikey: config.key,
+          Authorization: `Bearer ${config.key}`,
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `HTTP ${response.status}`);
+      }
+      if (response.status === 204) return null;
+      return response.json();
+    }
+
+    async function pushCloud() {
+      const config = getCloudConfig();
+      if (!config) return;
+      setSyncStatus("正在上传云端...");
+      const payload = {
+        sync_id: config.syncId,
+        records,
+        updated_at: new Date().toISOString(),
+      };
+      await cloudRequest(config, "study_time_records?on_conflict=sync_id", {
+        method: "POST",
+        headers: {
+          Prefer: "resolution=merge-duplicates,return=minimal",
+        },
+        body: JSON.stringify(payload),
+      });
+      setSyncStatus(`已上传 ${records.length} 条记录。`);
+    }
+
+    async function pullCloud() {
+      const config = getCloudConfig();
+      if (!config) return;
+      setSyncStatus("正在拉取云端...");
+      const rows = await cloudRequest(
+        config,
+        `study_time_records?sync_id=eq.${encodeURIComponent(config.syncId)}&select=records,updated_at&limit=1`,
+      );
+      if (!rows.length) {
+        setSyncStatus("云端还没有记录，可以先上传一次。");
+        return;
+      }
+      const incoming = Array.isArray(rows[0].records) ? rows[0].records : [];
+      if (records.length && !confirm(`云端有 ${incoming.length} 条记录，要覆盖当前本地记录吗？`)) {
+        setSyncStatus("已取消拉取。");
+        return;
+      }
+      records = incoming;
+      saveRecords();
+      render();
+      setSyncStatus(`已拉取 ${records.length} 条记录。`);
+    }
+
+    function resetForm() {
+      $("recordForm").reset();
+      $("recordId").value = "";
+      $("date").value = todayString();
+      $("focusDate").value ||= todayString();
+      $("counted").checked = true;
+      $("formTitle").textContent = "新增记录";
+    }
+
+    function getRecordFromForm() {
+      const date = $("date").value;
+      const start = $("start").value;
+      const end = $("end").value;
+      const hours = durationHours(start, end);
+      return {
+        id: $("recordId").value || crypto.randomUUID(),
+        date,
+        start,
+        end,
+        hours,
+        subject: $("subject").value,
+        task: $("task").value.trim(),
+        type: $("type").value,
+        counted: $("counted").checked,
+        note: $("note").value.trim(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    function countedRecords() {
+      return records.filter((item) => item.counted);
+    }
+
+    function renderStats() {
+      const focusDate = $("focusDate").value || todayString();
+      const counted = countedRecords();
+      const byDate = counted.filter((item) => item.date === focusDate);
+      const todayHours = byDate.reduce((sum, item) => sum + item.hours, 0);
+      const totalHours = counted.reduce((sum, item) => sum + item.hours, 0);
+      const activeDays = new Set(counted.map((item) => item.date)).size;
+
+      $("todayHours").textContent = fmtHours(todayHours);
+      $("todayCount").textContent = `${byDate.length}条`;
+      $("totalHours").textContent = fmtHours(totalHours);
+      $("activeDays").textContent = `${activeDays}天`;
+
+      const subjects = ["数学", "英语", "政治", "专业课", "其他"];
+      const subjectTotals = subjects.map((subject) => ({
+        subject,
+        hours: counted
+          .filter((item) => item.subject === subject)
+          .reduce((sum, item) => sum + item.hours, 0),
+      }));
+      const max = Math.max(1, ...subjectTotals.map((item) => item.hours));
+      $("subjectBars").innerHTML = subjectTotals.map((item) => `
+        <div class="bar-row">
+          <span>${item.subject}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${(item.hours / max) * 100}%"></div></div>
+          <strong>${item.hours.toFixed(1)}h</strong>
+        </div>
+      `).join("");
+
+      renderWeeklyStats(counted, focusDate);
+      renderMonthlyStats(counted, focusDate);
+    }
+
+    function renderWeeklyStats(counted, focusDate) {
+      const anchor = startOfWeek(dateFromString(focusDate));
+      const weeks = [];
+      for (let i = 7; i >= 0; i -= 1) {
+        const start = addDays(anchor, -7 * i);
+        const end = addDays(start, 6);
+        const startKey = dateKey(start);
+        const endKey = dateKey(end);
+        const hours = counted
+          .filter((item) => item.date >= startKey && item.date <= endKey)
+          .reduce((sum, item) => sum + item.hours, 0);
+        weeks.push({ label: `${startKey.slice(5)}~${endKey.slice(5)}`, hours });
+      }
+      const max = Math.max(1, ...weeks.map((item) => item.hours));
+      $("weeklyStats").innerHTML = weeks.map((item) => `
+        <div class="summary-item">
+          <span>${item.label}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${(item.hours / max) * 100}%"></div></div>
+          <strong>${item.hours.toFixed(1)}h</strong>
+        </div>
+      `).join("");
+    }
+
+    function renderMonthlyStats(counted, focusDate) {
+      const focus = dateFromString(focusDate);
+      const months = [];
+      for (let i = 5; i >= 0; i -= 1) {
+        const date = new Date(focus.getFullYear(), focus.getMonth() - i, 1);
+        const key = monthKey(date);
+        const hours = counted
+          .filter((item) => item.date.slice(0, 7) === key)
+          .reduce((sum, item) => sum + item.hours, 0);
+        months.push({ label: key, hours });
+      }
+      const max = Math.max(1, ...months.map((item) => item.hours));
+      $("monthlyStats").innerHTML = months.map((item) => `
+        <div class="summary-item">
+          <span>${item.label}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${(item.hours / max) * 100}%"></div></div>
+          <strong>${item.hours.toFixed(1)}h</strong>
+        </div>
+      `).join("");
+    }
+
+    function renderRecords() {
+      const filterDate = $("filterDate").value;
+      const filterSubject = $("filterSubject").value;
+      const visible = records
+        .filter((item) => !filterDate || item.date === filterDate)
+        .filter((item) => !filterSubject || item.subject === filterSubject)
+        .sort((a, b) => `${b.date} ${b.start}`.localeCompare(`${a.date} ${a.start}`));
+
+      $("emptyState").style.display = visible.length ? "none" : "block";
+      $("recordsBody").innerHTML = visible.map((item) => `
+        <tr>
+          <td>${item.date}</td>
+          <td>${item.start} - ${item.end}</td>
+          <td>${fmtHours(item.hours)}</td>
+          <td><span class="pill">${item.subject}</span></td>
+          <td>
+            <strong>${item.task || "未填写"}</strong>
+            ${item.note ? `<div class="subtitle">${item.note}</div>` : ""}
+          </td>
+          <td><span class="pill ${item.counted ? "" : "rest"}">${item.counted ? item.type : "不计入"}</span></td>
+          <td>
+            <div class="record-actions">
+              <button class="mini" type="button" data-edit="${item.id}">编辑</button>
+              <button class="mini danger" type="button" data-delete="${item.id}">删除</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function render() {
+      renderStats();
+      renderRecords();
+    }
+
+    function editRecord(id) {
+      const item = records.find((record) => record.id === id);
+      if (!item) return;
+      $("recordId").value = item.id;
+      $("date").value = item.date;
+      $("start").value = item.start;
+      $("end").value = item.end;
+      $("subject").value = item.subject;
+      $("task").value = item.task;
+      $("type").value = item.type;
+      $("counted").checked = item.counted;
+      $("note").value = item.note;
+      $("formTitle").textContent = "编辑记录";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function deleteRecord(id) {
+      if (!confirm("删除这条记录吗？")) return;
+      records = records.filter((item) => item.id !== id);
+      saveRecords();
+      render();
+    }
+
+    function download(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportCsv() {
+      const header = ["日期", "开始时间", "结束时间", "时长", "科目", "任务内容", "学习类型", "是否计入", "备注"];
+      const lines = records.map((item) => [
+        item.date,
+        item.start,
+        item.end,
+        item.hours.toFixed(2),
+        item.subject,
+        item.task,
+        item.type,
+        item.counted ? "1" : "0",
+        item.note,
+      ].map((cell) => `"${String(cell || "").replaceAll('"', '""')}"`).join(","));
+      download(`考研时间记录_${todayString()}.csv`, [header.join(","), ...lines].join("\n"), "text/csv;charset=utf-8");
+    }
+
+    function exportJson() {
+      download(`考研时间记录备份_${todayString()}.json`, JSON.stringify(records, null, 2), "application/json;charset=utf-8");
+    }
+
+    $("recordForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const next = getRecordFromForm();
+      const index = records.findIndex((item) => item.id === next.id);
+      if (index >= 0) {
+        records[index] = next;
+      } else {
+        records.push(next);
+      }
+      saveRecords();
+      resetForm();
+      render();
+      const config = loadCloudConfig();
+      if (config.autoSync && config.url && config.key && config.syncId) {
+        pushCloud().catch((error) => setSyncStatus(`自动上传失败：${error.message}`));
+      }
+    });
+
+    $("recordsBody").addEventListener("click", (event) => {
+      const editId = event.target.dataset.edit;
+      const deleteId = event.target.dataset.delete;
+      if (editId) editRecord(editId);
+      if (deleteId) deleteRecord(deleteId);
+    });
+
+    $("focusDate").addEventListener("change", renderStats);
+    $("filterDate").addEventListener("change", renderRecords);
+    $("filterSubject").addEventListener("change", renderRecords);
+    $("resetFormBtn").addEventListener("click", resetForm);
+    $("exportCsvBtn").addEventListener("click", exportCsv);
+    $("exportJsonBtn").addEventListener("click", exportJson);
+    $("importBtn").addEventListener("click", () => $("importFile").click());
+    $("importFile").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      const imported = JSON.parse(text);
+      if (!Array.isArray(imported)) {
+        alert("这个 JSON 格式不对。");
+        return;
+      }
+      records = imported;
+      saveRecords();
+      render();
+      event.target.value = "";
+    });
+    $("clearBtn").addEventListener("click", () => {
+      if (!confirm("清空全部本地记录吗？建议先备份 JSON。")) return;
+      records = [];
+      saveRecords();
+      render();
+    });
+    $("saveCloudBtn").addEventListener("click", saveCloudConfig);
+    $("pushCloudBtn").addEventListener("click", () => {
+      pushCloud().catch((error) => setSyncStatus(`上传失败：${error.message}`));
+    });
+    $("pullCloudBtn").addEventListener("click", () => {
+      pullCloud().catch((error) => setSyncStatus(`拉取失败：${error.message}`));
+    });
+
+    loadRecords();
+    applyCloudConfig();
+    $("focusDate").value = todayString();
+    resetForm();
+    render();
+    {
+      const config = loadCloudConfig();
+      if (!records.length && config.autoSync && config.url && config.key && config.syncId) {
+        pullCloud().catch((error) => setSyncStatus(`自动拉取失败：${error.message}`));
+      }
+    }
+  </script>
+</body>
+</html>
