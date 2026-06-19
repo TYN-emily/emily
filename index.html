@@ -508,6 +508,26 @@
       font-size: 13px;
     }
 
+    .reflection-box {
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .reflection-box textarea {
+      min-height: 128px;
+      line-height: 1.6;
+    }
+
+    .reflection-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
     @media (max-width: 880px) {
       .topbar {
         align-items: stretch;
@@ -685,7 +705,7 @@
               <input id="focusDate" type="date" />
               <label class="goal-control">
                 目标
-                <input id="dailyGoal" type="number" min="0.5" step="0.5" value="8" />
+                <input id="dailyGoal" type="number" min="0.5" step="0.5" value="10" />
               </label>
             </div>
           </div>
@@ -696,7 +716,7 @@
             </div>
             <div class="metric">
               <span>今日目标</span>
-              <strong id="todayGoalLabel">8.00h</strong>
+              <strong id="todayGoalLabel">10.00h</strong>
             </div>
             <div class="metric">
               <span>完成率</span>
@@ -738,6 +758,20 @@
             <div>
               <div class="subtitle" style="margin-bottom:8px">最近 6 个月</div>
               <div class="summary-list" id="monthlyStats"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-top:16px">
+          <div class="panel-header">
+            <h2 class="panel-title">每日反思</h2>
+            <span class="subtitle" id="reflectionDateLabel"></span>
+          </div>
+          <div class="reflection-box">
+            <textarea id="dailyReflection" placeholder="今天学得怎么样？哪里做得好，哪里卡住了，明天想怎么调整？"></textarea>
+            <div class="reflection-footer">
+              <span id="reflectionStatus">未保存</span>
+              <button class="btn primary" id="saveReflectionBtn" type="button">保存反思</button>
             </div>
           </div>
         </section>
@@ -789,6 +823,7 @@
 
   <script>
     const storageKey = "postgrad-study-time-records-v1";
+    const reflectionStorageKey = "postgrad-study-time-reflections-v1";
     const cloudConfigKey = "postgrad-study-time-cloud-config-v1";
     const dailyGoalKey = "postgrad-study-time-daily-goal-v1";
     const subjectColors = {
@@ -799,6 +834,7 @@
       其他: "#7b8494",
     };
     let records = [];
+    let reflections = {};
 
     const $ = (id) => document.getElementById(id);
 
@@ -859,8 +895,8 @@
     }
 
     function loadDailyGoal() {
-      const value = Number(localStorage.getItem(dailyGoalKey) || 8);
-      return Number.isFinite(value) && value > 0 ? value : 8;
+      const value = Number(localStorage.getItem(dailyGoalKey) || 10);
+      return Number.isFinite(value) && value > 0 ? value : 10;
     }
 
     function saveDailyGoal(value) {
@@ -877,6 +913,18 @@
 
     function saveRecords() {
       localStorage.setItem(storageKey, JSON.stringify(records));
+    }
+
+    function loadReflections() {
+      try {
+        reflections = JSON.parse(localStorage.getItem(reflectionStorageKey) || "{}");
+      } catch {
+        reflections = {};
+      }
+    }
+
+    function saveReflections() {
+      localStorage.setItem(reflectionStorageKey, JSON.stringify(reflections));
     }
 
     function setSyncStatus(message) {
@@ -954,7 +1002,11 @@
       setSyncStatus("正在上传云端...");
       const payload = {
         sync_id: config.syncId,
-        records,
+        records: {
+          version: 2,
+          records,
+          reflections,
+        },
         updated_at: new Date().toISOString(),
       };
       await cloudRequest(config, "study_time_records?on_conflict=sync_id", {
@@ -979,13 +1031,17 @@
         setSyncStatus("云端还没有记录，可以先上传一次。");
         return;
       }
-      const incoming = Array.isArray(rows[0].records) ? rows[0].records : [];
-      if (records.length && !confirm(`云端有 ${incoming.length} 条记录，要覆盖当前本地记录吗？`)) {
+      const incomingPayload = rows[0].records;
+      const incomingRecords = Array.isArray(incomingPayload) ? incomingPayload : (incomingPayload.records || []);
+      const incomingReflections = Array.isArray(incomingPayload) ? {} : (incomingPayload.reflections || {});
+      if ((records.length || Object.keys(reflections).length) && !confirm(`云端有 ${incomingRecords.length} 条记录，要覆盖当前本地数据吗？`)) {
         setSyncStatus("已取消拉取。");
         return;
       }
-      records = incoming;
+      records = incomingRecords;
+      reflections = incomingReflections;
       saveRecords();
+      saveReflections();
       render();
       setSyncStatus(`已拉取 ${records.length} 条记录。`);
     }
@@ -1200,6 +1256,7 @@
     function render() {
       renderStats();
       renderRecords();
+      renderReflection();
     }
 
     function editRecord(id) {
@@ -1252,7 +1309,35 @@
     }
 
     function exportJson() {
-      download(`考研时间记录备份_${todayString()}.json`, JSON.stringify(records, null, 2), "application/json;charset=utf-8");
+      const payload = {
+        version: 2,
+        records,
+        reflections,
+      };
+      download(`考研时间记录备份_${todayString()}.json`, JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
+    }
+
+    function renderReflection() {
+      const focusDate = $("focusDate").value || todayString();
+      $("reflectionDateLabel").textContent = focusDate;
+      $("dailyReflection").value = reflections[focusDate] || "";
+      $("reflectionStatus").textContent = reflections[focusDate] ? "已保存" : "未保存";
+    }
+
+    function saveCurrentReflection() {
+      const focusDate = $("focusDate").value || todayString();
+      const text = $("dailyReflection").value.trim();
+      if (text) {
+        reflections[focusDate] = text;
+      } else {
+        delete reflections[focusDate];
+      }
+      saveReflections();
+      renderReflection();
+      const config = loadCloudConfig();
+      if (config.autoSync && config.url && config.key && config.syncId) {
+        pushCloud().catch((error) => setSyncStatus(`自动上传失败：${error.message}`));
+      }
     }
 
     $("recordForm").addEventListener("submit", (event) => {
@@ -1280,7 +1365,10 @@
       if (deleteId) deleteRecord(deleteId);
     });
 
-    $("focusDate").addEventListener("change", renderStats);
+    $("focusDate").addEventListener("change", () => {
+      renderStats();
+      renderReflection();
+    });
     $("dailyGoal").addEventListener("change", () => {
       const value = Number($("dailyGoal").value);
       if (!Number.isFinite(value) || value <= 0) {
@@ -1301,12 +1389,18 @@
       if (!file) return;
       const text = await file.text();
       const imported = JSON.parse(text);
-      if (!Array.isArray(imported)) {
+      if (Array.isArray(imported)) {
+        records = imported;
+        reflections = {};
+      } else if (imported && Array.isArray(imported.records)) {
+        records = imported.records;
+        reflections = imported.reflections || {};
+      } else {
         alert("这个 JSON 格式不对。");
         return;
       }
-      records = imported;
       saveRecords();
+      saveReflections();
       render();
       event.target.value = "";
     });
@@ -1317,9 +1411,12 @@
         return;
       }
       records = [];
+      reflections = {};
       saveRecords();
+      saveReflections();
       render();
     });
+    $("saveReflectionBtn").addEventListener("click", saveCurrentReflection);
     $("saveCloudBtn").addEventListener("click", saveCloudConfig);
     $("pushCloudBtn").addEventListener("click", () => {
       pushCloud().catch((error) => setSyncStatus(`上传失败：${error.message}`));
@@ -1329,6 +1426,7 @@
     });
 
     loadRecords();
+    loadReflections();
     applyCloudConfig();
     $("focusDate").value = todayString();
     $("dailyGoal").value = loadDailyGoal();
