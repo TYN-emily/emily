@@ -240,6 +240,27 @@
       min-height: 86px;
     }
 
+    .today-panel {
+      border-color: rgba(47, 111, 237, 0.28);
+      background:
+        linear-gradient(135deg, rgba(47, 111, 237, 0.12), rgba(39, 130, 93, 0.08)),
+        rgba(255, 255, 255, 0.9);
+    }
+
+    .today-panel .panel-header {
+      border-bottom-color: rgba(47, 111, 237, 0.18);
+    }
+
+    .today-panel .metric.featured {
+      background: linear-gradient(135deg, #1f55bf, #27825d);
+      color: white;
+      border-color: transparent;
+    }
+
+    .today-panel .metric.featured span {
+      color: rgba(255, 255, 255, 0.78);
+    }
+
     .metric strong {
       display: block;
       font-size: 24px;
@@ -250,6 +271,50 @@
     .metric span {
       color: var(--muted);
       font-size: 13px;
+    }
+
+    .goal-control {
+      display: grid;
+      grid-template-columns: auto 78px;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .goal-control input {
+      min-height: 34px;
+      padding: 6px 8px;
+    }
+
+    .goal-progress {
+      padding: 0 16px 16px;
+    }
+
+    .progress-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-track {
+      height: 16px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(47, 111, 237, 0.12);
+      border: 1px solid rgba(47, 111, 237, 0.16);
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+      transition: width 0.2s ease;
     }
 
     .section-body {
@@ -358,6 +423,21 @@
     .summary-list {
       display: grid;
       gap: 8px;
+    }
+
+    .trend-copy {
+      display: grid;
+      gap: 8px;
+      padding: 16px 16px 0;
+    }
+
+    .trend-item {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: #354055;
+      font-size: 14px;
     }
 
     .summary-item {
@@ -598,27 +678,42 @@
       </aside>
 
       <div>
-        <section class="panel">
+        <section class="panel today-panel">
           <div class="panel-header">
             <h2 class="panel-title">今日概览</h2>
-            <input id="focusDate" type="date" />
+            <div class="two" style="width:min(300px,100%)">
+              <input id="focusDate" type="date" />
+              <label class="goal-control">
+                目标
+                <input id="dailyGoal" type="number" min="0.5" step="0.5" value="8" />
+              </label>
+            </div>
           </div>
           <div class="stats">
-            <div class="metric">
+            <div class="metric featured">
               <span>今日学习</span>
               <strong id="todayHours">0.00h</strong>
             </div>
             <div class="metric">
-              <span>今日记录</span>
-              <strong id="todayCount">0条</strong>
+              <span>今日目标</span>
+              <strong id="todayGoalLabel">8.00h</strong>
             </div>
             <div class="metric">
-              <span>累计学习</span>
-              <strong id="totalHours">0.00h</strong>
+              <span>完成率</span>
+              <strong id="todayPercent">0%</strong>
             </div>
             <div class="metric">
-              <span>有效天数</span>
-              <strong id="activeDays">0天</strong>
+              <span>连续学习</span>
+              <strong id="streakDays">0天</strong>
+            </div>
+          </div>
+          <div class="goal-progress">
+            <div class="progress-line">
+              <span>今日进度</span>
+              <strong id="todayProgressText">0.00 / 8.00h</strong>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="todayProgressFill"></div>
             </div>
           </div>
         </section>
@@ -634,6 +729,7 @@
           <div class="panel-header">
             <h2 class="panel-title">周月统计</h2>
           </div>
+          <div class="trend-copy" id="trendSummary"></div>
           <div class="mini-grid">
             <div>
               <div class="subtitle" style="margin-bottom:8px">最近 8 周</div>
@@ -694,6 +790,14 @@
   <script>
     const storageKey = "postgrad-study-time-records-v1";
     const cloudConfigKey = "postgrad-study-time-cloud-config-v1";
+    const dailyGoalKey = "postgrad-study-time-daily-goal-v1";
+    const subjectColors = {
+      数学: "#2f6fed",
+      英语: "#27825d",
+      政治: "#c94343",
+      专业课: "#7c3aed",
+      其他: "#7b8494",
+    };
     let records = [];
 
     const $ = (id) => document.getElementById(id);
@@ -719,6 +823,11 @@
 
     function fmtHours(value) {
       return `${Number(value || 0).toFixed(2)}h`;
+    }
+
+    function fmtSignedHours(value) {
+      const sign = value >= 0 ? "增加" : "减少";
+      return `${sign} ${Math.abs(value).toFixed(1)}h`;
     }
 
     function dateFromString(value) {
@@ -747,6 +856,15 @@
 
     function monthKey(date) {
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    }
+
+    function loadDailyGoal() {
+      const value = Number(localStorage.getItem(dailyGoalKey) || 8);
+      return Number.isFinite(value) && value > 0 ? value : 8;
+    }
+
+    function saveDailyGoal(value) {
+      localStorage.setItem(dailyGoalKey, String(value));
     }
 
     function loadRecords() {
@@ -905,18 +1023,62 @@
       return records.filter((item) => item.counted);
     }
 
+    function sumHours(items) {
+      return items.reduce((sum, item) => sum + item.hours, 0);
+    }
+
+    function hoursForDate(counted, date) {
+      return sumHours(counted.filter((item) => item.date === date));
+    }
+
+    function hoursBetween(counted, startKey, endKey) {
+      return sumHours(counted.filter((item) => item.date >= startKey && item.date <= endKey));
+    }
+
+    function countStreak(counted, focusDate) {
+      let cursor = dateFromString(focusDate);
+      let streak = 0;
+      while (hoursForDate(counted, dateKey(cursor)) > 0) {
+        streak += 1;
+        cursor = addDays(cursor, -1);
+      }
+      return streak;
+    }
+
+    function topSubjectShare(counted, startKey, endKey) {
+      const scoped = counted.filter((item) => item.date >= startKey && item.date <= endKey);
+      const total = sumHours(scoped);
+      if (!total) return null;
+      const subjects = ["数学", "英语", "政治", "专业课", "其他"];
+      const top = subjects
+        .map((subject) => ({
+          subject,
+          hours: sumHours(scoped.filter((item) => item.subject === subject)),
+        }))
+        .sort((a, b) => b.hours - a.hours)[0];
+      return {
+        subject: top.subject,
+        percent: Math.round((top.hours / total) * 100),
+      };
+    }
+
     function renderStats() {
       const focusDate = $("focusDate").value || todayString();
       const counted = countedRecords();
       const byDate = counted.filter((item) => item.date === focusDate);
       const todayHours = byDate.reduce((sum, item) => sum + item.hours, 0);
       const totalHours = counted.reduce((sum, item) => sum + item.hours, 0);
-      const activeDays = new Set(counted.map((item) => item.date)).size;
+      const dailyGoal = loadDailyGoal();
+      const completion = dailyGoal ? Math.min(999, Math.round((todayHours / dailyGoal) * 100)) : 0;
+      const progressWidth = Math.min(100, dailyGoal ? (todayHours / dailyGoal) * 100 : 0);
+      const streak = countStreak(counted, focusDate);
 
       $("todayHours").textContent = fmtHours(todayHours);
-      $("todayCount").textContent = `${byDate.length}条`;
-      $("totalHours").textContent = fmtHours(totalHours);
-      $("activeDays").textContent = `${activeDays}天`;
+      $("todayGoalLabel").textContent = fmtHours(dailyGoal);
+      $("todayPercent").textContent = `${completion}%`;
+      $("streakDays").textContent = `${streak}天`;
+      $("todayProgressText").textContent = `${todayHours.toFixed(2)} / ${dailyGoal.toFixed(2)}h`;
+      $("todayProgressFill").style.width = `${progressWidth}%`;
 
       const subjects = ["数学", "英语", "政治", "专业课", "其他"];
       const subjectTotals = subjects.map((subject) => ({
@@ -929,13 +1091,36 @@
       $("subjectBars").innerHTML = subjectTotals.map((item) => `
         <div class="bar-row">
           <span>${item.subject}</span>
-          <div class="bar-track"><div class="bar-fill" style="width:${(item.hours / max) * 100}%"></div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${(item.hours / max) * 100}%;background:${subjectColors[item.subject]}"></div></div>
           <strong>${item.hours.toFixed(1)}h</strong>
         </div>
       `).join("");
 
+      renderTrendSummary(counted, focusDate);
       renderWeeklyStats(counted, focusDate);
       renderMonthlyStats(counted, focusDate);
+    }
+
+    function renderTrendSummary(counted, focusDate) {
+      const focus = dateFromString(focusDate);
+      const weekStart = startOfWeek(focus);
+      const weekEnd = addDays(weekStart, 6);
+      const prevWeekStart = addDays(weekStart, -7);
+      const prevWeekEnd = addDays(weekStart, -1);
+      const thisWeek = hoursBetween(counted, dateKey(weekStart), dateKey(weekEnd));
+      const prevWeek = hoursBetween(counted, dateKey(prevWeekStart), dateKey(prevWeekEnd));
+      const monthStart = new Date(focus.getFullYear(), focus.getMonth(), 1);
+      const monthEnd = new Date(focus.getFullYear(), focus.getMonth() + 1, 0);
+      const thisMonth = hoursBetween(counted, dateKey(monthStart), dateKey(monthEnd));
+      const share = topSubjectShare(counted, dateKey(monthStart), dateKey(monthEnd));
+      const streak = countStreak(counted, focusDate);
+      const shareText = share ? `${share.subject}占比最高，占 ${share.percent}%` : "本月还没有可统计的科目占比";
+      $("trendSummary").innerHTML = [
+        `本周比上周${fmtSignedHours(thisWeek - prevWeek)}`,
+        `连续学习 ${streak} 天`,
+        `本月累计 ${thisMonth.toFixed(1)}h`,
+        shareText,
+      ].map((text) => `<div class="trend-item">${text}</div>`).join("");
     }
 
     function renderWeeklyStats(counted, focusDate) {
@@ -1096,6 +1281,15 @@
     });
 
     $("focusDate").addEventListener("change", renderStats);
+    $("dailyGoal").addEventListener("change", () => {
+      const value = Number($("dailyGoal").value);
+      if (!Number.isFinite(value) || value <= 0) {
+        $("dailyGoal").value = loadDailyGoal();
+        return;
+      }
+      saveDailyGoal(value);
+      renderStats();
+    });
     $("filterDate").addEventListener("change", renderRecords);
     $("filterSubject").addEventListener("change", renderRecords);
     $("resetFormBtn").addEventListener("click", resetForm);
@@ -1117,7 +1311,11 @@
       event.target.value = "";
     });
     $("clearBtn").addEventListener("click", () => {
-      if (!confirm("清空全部本地记录吗？建议先备份 JSON。")) return;
+      const answer = prompt("确定要清空所有记录吗？此操作不可恢复。请输入 CLEAR 确认。");
+      if (answer !== "CLEAR") {
+        alert("已取消清空。");
+        return;
+      }
       records = [];
       saveRecords();
       render();
@@ -1133,6 +1331,7 @@
     loadRecords();
     applyCloudConfig();
     $("focusDate").value = todayString();
+    $("dailyGoal").value = loadDailyGoal();
     resetForm();
     render();
     {
