@@ -740,7 +740,8 @@
 
         <section class="panel" style="margin-top:16px">
           <div class="panel-header">
-            <h2 class="panel-title">科目统计</h2>
+            <h2 class="panel-title">当日科目统计</h2>
+            <span class="subtitle" id="subjectStatsDate"></span>
           </div>
           <div class="bars" id="subjectBars"></div>
         </section>
@@ -1139,10 +1140,11 @@
       const subjects = ["数学", "英语", "政治", "专业课", "其他"];
       const subjectTotals = subjects.map((subject) => ({
         subject,
-        hours: counted
+        hours: byDate
           .filter((item) => item.subject === subject)
           .reduce((sum, item) => sum + item.hours, 0),
       }));
+      $("subjectStatsDate").textContent = focusDate;
       const max = Math.max(1, ...subjectTotals.map((item) => item.hours));
       $("subjectBars").innerHTML = subjectTotals.map((item) => `
         <div class="bar-row">
